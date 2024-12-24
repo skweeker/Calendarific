@@ -1,8 +1,6 @@
   
 {
   "name": "Calendarific",
-  "zip_release": true,
-  "filename": "calendarific.zip",
   "domains": ["calendarific", "sensor"],
   "homeassistant": "2024.4.0",
   "iot_class": "Cloud Polling"
