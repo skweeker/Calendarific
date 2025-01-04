@@ -7,6 +7,7 @@ import requests
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from homeassistant import config_entries
@@ -37,8 +38,6 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
-holiday_list = []
-
 def setup(hass, config):
     """Set up platform using YAML."""
     if DOMAIN in config:
@@ -54,14 +53,12 @@ def setup(hass, config):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
     return True
 
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
-    return await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    return await hass.config_entries.async_forward_entry_unload(entry, Platform.SENSOR)
 
 class CalendarificApiReader:
 
@@ -96,6 +93,9 @@ class CalendarificApiReader:
             return next(i for i in self._holidays if i['name'] == holiday_name)['description']
         except:
             return "NOT FOUND"
+        
+    def get_holidays(self):
+        return [item['name'] for item in self._holidays]
 
     def update(self):
         if self._lastupdated == datetime.now().date():
@@ -121,10 +121,6 @@ class CalendarificApiReader:
             return
         self._error_logged = False
         self._next_holidays = response['response']['holidays']
-        global holiday_list
-        holiday_list = []
-        for holiday in self._holidays:
-            holiday_list.append(holiday['name'])
         
         return True
 
