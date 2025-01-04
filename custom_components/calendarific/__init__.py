@@ -38,8 +38,6 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
-holiday_list = []
-
 def setup(hass, config):
     """Set up platform using YAML."""
     if DOMAIN in config:
@@ -95,6 +93,9 @@ class CalendarificApiReader:
             return next(i for i in self._holidays if i['name'] == holiday_name)['description']
         except:
             return "NOT FOUND"
+        
+    def get_holidays(self):
+        return [item['name'] for item in self._holidays]
 
     def update(self):
         if self._lastupdated == datetime.now().date():
@@ -120,10 +121,6 @@ class CalendarificApiReader:
             return
         self._error_logged = False
         self._next_holidays = response['response']['holidays']
-        global holiday_list
-        holiday_list = []
-        for holiday in self._holidays:
-            holiday_list.append(holiday['name'])
         
         return True
 

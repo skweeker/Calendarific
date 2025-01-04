@@ -5,6 +5,7 @@ import uuid
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant import core
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 
@@ -27,8 +28,6 @@ from .const import (
     CONF_UNIT_OF_MEASUREMENT,
 )
 
-from . import holiday_list
-
 _LOGGER = logging.getLogger(__name__)
 
 @callback
@@ -46,9 +45,11 @@ class CalendarificConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
         self._data = {}
         self._data["unique_id"] = str(uuid.uuid4())
+        hass = core.async_get_hass()
+        self._holiday_list = hass.data[DOMAIN]["apiReader"].get_holidays()
 
     async def async_step_user(self, user_input=None):
-        if holiday_list == []:
+        if self._holiday_list == []:
             return self.async_abort(reason="no_holidays_found")
         self._errors = {}
         if user_input is not None:
@@ -84,7 +85,7 @@ class CalendarificConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if CONF_UNIT_OF_MEASUREMENT in user_input:
                 unit_of_measurement = user_input[CONF_UNIT_OF_MEASUREMENT]
         data_schema = OrderedDict()
-        data_schema[vol.Required(CONF_HOLIDAY, default=holiday)] = vol.In(holiday_list) 
+        data_schema[vol.Required(CONF_HOLIDAY, default=holiday)] = vol.In(self._holiday_list)
         data_schema[vol.Optional(CONF_NAME, default=name)] = str
         data_schema[vol.Required(CONF_UNIT_OF_MEASUREMENT, default=unit_of_measurement)] = str
         data_schema[vol.Required(CONF_ICON_NORMAL, default=icon_normal)] = str
